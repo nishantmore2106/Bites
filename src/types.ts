@@ -3,10 +3,10 @@ export interface MenuItem {
   name: string;
   category: string;
   price: number;
+  priceLabel?: string;
   description: string;
   image: string;
   badge?: string;
-  calories?: string;
 }
 
 export interface TestimonialItem {

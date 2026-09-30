@@ -12,14 +12,14 @@ export const HeroBanner: React.FC = () => {
     if (!ctx) return;
 
     const frameCount = 300;
-    
+
     // Pad number with leading zeros (e.g., 001, 002)
-    const currentFrame = (index: number) => 
+    const currentFrame = (index: number) =>
       `/ezgif-6c7c8fed768e4d34-png-split/ezgif-frame-${index.toString().padStart(3, '0')}.png`;
 
     const images: HTMLImageElement[] = [];
     let isLoaded = false;
-    
+
     const firstImage = new Image();
     firstImage.src = currentFrame(1);
     firstImage.onload = () => {
@@ -42,18 +42,18 @@ export const HeroBanner: React.FC = () => {
 
     const handleScroll = () => {
       if (!isLoaded || !sectionRef.current) return;
-      
+
       const { top, height } = sectionRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-      
+
       const maxScroll = height - viewportHeight;
-      const scrollPos = -top; 
+      const scrollPos = -top;
 
       if (scrollPos < 0) return;
       if (scrollPos > maxScroll) return;
 
       const scrollFraction = scrollPos / maxScroll;
-      
+
       let frameIndex = Math.min(
         frameCount,
         Math.floor(scrollFraction * (frameCount - 1)) + 1
@@ -90,13 +90,13 @@ export const HeroBanner: React.FC = () => {
     >
       <div className="fixed inset-0 flex items-center justify-center overflow-hidden z-[-1] bg-black">
         <canvas ref={canvasRef} className="w-full h-full object-cover"></canvas>
-        
+
         {/* Giant Static Typography (Pops out on scroll) */}
         <div className={`absolute inset-0 pointer-events-none p-6 md:p-12 z-0 transition-all duration-700 ease-in-out transform origin-center ${isTitleVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-110'}`}>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl flex justify-center items-center">
-            <img 
-              src="/image copy 28.png" 
-              alt="Brand Banner" 
+            <img
+              src="/image copy 28.png"
+              alt="Brand Banner"
               className="w-[90%] md:w-full h-auto object-contain drop-shadow-2xl"
             />
           </div>
@@ -108,7 +108,7 @@ export const HeroBanner: React.FC = () => {
             <span className="font-cursive text-lg md:text-3xl text-white tracking-wide">Top Bread</span>
             <div className="h-0.5 w-8 md:w-32 lg:w-48 bg-bites-orange shadow-[0_0_8px_rgba(243,107,33,0.6)]"></div>
           </div>
-          
+
           <div className={`flex items-center justify-end gap-2 md:gap-8 transition-all duration-700 delay-100 ease-out transform ${isAirFrame ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
             <div className="h-0.5 w-8 md:w-32 lg:w-48 bg-bites-orange shadow-[0_0_8px_rgba(243,107,33,0.6)]"></div>
             <span className="font-cursive text-lg md:text-3xl text-white tracking-wide text-right">Extra Cheese</span>
@@ -126,10 +126,10 @@ export const HeroBanner: React.FC = () => {
         </div>
 
         {/* Watermark Cover */}
-        <div className="absolute -bottom-4 -right-2 md:-bottom-6 md:-right-4 z-10 opacity-90">
-          <img 
-            src="/image copy 3.png" 
-            alt="Logo cover" 
+        <div className="absolute bottom-4 right-10 z-50">
+          <img
+            src="/image copy 3.png"
+            alt="Logo cover"
             className="w-32 h-32 md:w-48 md:h-48 object-contain"
           />
         </div>

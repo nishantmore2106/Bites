@@ -27,20 +27,20 @@ export const FeatureHighlight: React.FC = () => {
   const words = text.split(' ');
 
   return (
-    <section 
-      id="section-feature-highlight" 
+    <section
+      id="section-feature-highlight"
       ref={sectionRef}
       className="w-full min-h-[80vh] md:min-h-screen py-32 md:py-56 flex items-center relative overflow-hidden"
     >
       {/* Mobile Background */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat md:hidden z-0"
         style={{ backgroundImage: 'url("/image copy 11.png")' }}
       />
       {/* Desktop Background */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden md:block z-0"
-        style={{ backgroundImage: 'url("/image copy 6.png")' }}
+        style={{ backgroundImage: 'url("/image copy 30.png")' }}
       />
 
       <div className="w-full px-6 md:px-12 lg:pr-24 flex justify-center md:justify-end relative z-10">
@@ -49,8 +49,8 @@ export const FeatureHighlight: React.FC = () => {
             {words.map((word, wIdx) => (
               <span key={wIdx} className="inline-block whitespace-nowrap mr-[0.3em]">
                 {word.split('').map((char, cIdx) => (
-                  <span 
-                    key={cIdx} 
+                  <span
+                    key={cIdx}
                     className="inline-block transition-transform duration-200 hover:-translate-y-2 md:hover:-translate-y-4 hover:text-bites-orange"
                   >
                     {char}
