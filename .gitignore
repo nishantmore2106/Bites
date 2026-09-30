@@ -7,7 +7,4 @@ coverage/
 .env*
 !.env.example
 
-# Large media files — too big for GitHub (use Netlify LFS or CDN instead)
-public/Archive 2/
-public/ezgif-6c7c8fed768e4d34-png-split/
 public/download.mp4
