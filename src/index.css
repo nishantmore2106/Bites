@@ -1,0 +1,88 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
+@font-face {
+  font-family: 'Placard Next';
+  src: url('/fonts/PlacardNextBold.TTF') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Placard Next';
+  src: url('/fonts/PlacardNextCnMed.TTF') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roundabout';
+  src: url('/fonts/FT Roundabout W00 Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@theme {
+  --color-bites-blue: #073B7A;
+  --color-bites-orange: #F36B21;
+  --color-teal-blue: #087A9B;
+  --color-champagne: #EACEAA;
+  --color-whiskey-sour: #D39858;
+  --color-honey-garlic: #85431E;
+  --color-burnt-coffee: #34150F;
+  --color-brand-white: #FFFFFF;
+
+  --font-display: 'Bricolage Grotesque', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-placard: 'Placard Next', sans-serif;
+  --font-roundabout: 'Roundabout', sans-serif;
+  --font-cursive: 'Pacifico', cursive;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+:root {
+  --bites-blue: #073B7A;
+  --bites-orange: #F36B21;
+  --teal-blue: #087A9B;
+  --champagne: #EACEAA;
+  --whiskey-sour: #D39858;
+  --honey-garlic: #85431E;
+  --burnt-coffee: #34150F;
+  --white: #FFFFFF;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--champagne);
+  color: var(--burnt-coffee);
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+}
+
+/* Warm soft shadow for floating food imagery */
+.shadow-warm {
+  box-shadow: 0 20px 40px -15px rgba(52, 21, 15, 0.28), 0 8px 16px -6px rgba(52, 21, 15, 0.18);
+}
+
+.shadow-warm-lg {
+  box-shadow: 0 30px 60px -12px rgba(52, 21, 15, 0.35), 0 12px 24px -8px rgba(52, 21, 15, 0.22);
+}
+
+.shadow-warm-sm {
+  box-shadow: 0 10px 20px -8px rgba(52, 21, 15, 0.2);
+}
+
+/* Texture typography background line-height tightness */
+.leading-tightest {
+  line-height: 0.88;
+}
