@@ -23,20 +23,20 @@ export const TestimonialSlider: React.FC = () => {
   };
 
   const productImages = [
-    '/image copy 17.png',
-    '/image copy 18.png',
-    '/image copy 16.png',
-    '/image copy 17.png',
-    '/image copy 18.png',
-    '/image copy 16.png',
-    '/image copy 17.png',
-    '/image copy 18.png',
-    '/image copy 16.png',
-    '/image copy 17.png',
-    '/image copy 18.png',
-    '/image copy 16.png',
-    '/image copy 17.png',
-    '/image copy 18.png',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.44 PM.jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.56 PM (3).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.57 PM (8).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.56 PM (6).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.57 PM (2).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.56 PM (1).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.57 PM (10).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.56 PM (7).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.57 PM (4).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.57 PM (12).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.56 PM (5).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.57 PM (6).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.56 PM (4).jpeg',
+    '/WhatsApp Unknown 2026-10-01 at 9.31.52 PM/WhatsApp Image 2026-10-01 at 9.18.57 PM (1).jpeg',
   ];
 
   return (

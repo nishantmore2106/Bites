@@ -16,6 +16,7 @@ export const VideoSection: React.FC<{ onOpenMenu: () => void }> = ({ onOpenMenu 
         loop
         muted
         playsInline
+        preload="auto"
       />
       {/* Dark Overlay to make content pop */}
       <div className="absolute inset-0 bg-[#34150F]/40 pointer-events-none"></div>
@@ -32,7 +33,7 @@ export const VideoSection: React.FC<{ onOpenMenu: () => void }> = ({ onOpenMenu 
             <p className="font-body text-lg md:text-xl text-white/90 max-w-sm mb-10 font-medium drop-shadow-md">
               Timeless recipes and fresh ingredients that speak for themselves.
             </p>
-            <button onClick={onOpenMenu} className="flex items-center gap-3 bg-[#34150F] text-white px-8 py-4 rounded-full uppercase tracking-wider text-sm font-bold hover:bg-[#EACEAA] hover:text-[#34150F] transition-all cursor-pointer border-none shadow-xl group">
+            <button onClick={onOpenMenu} className="flex items-center gap-3 bg-white text-[#34150F] px-8 py-4 rounded-full uppercase tracking-wider text-sm font-bold hover:bg-[#EACEAA] hover:text-[#34150F] transition-all cursor-pointer border-none shadow-xl group">
               Enter Menu
               <div className="bg-white text-[#34150F] p-1.5 rounded-full group-hover:bg-[#34150F] group-hover:text-white transition-colors">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
@@ -51,7 +52,7 @@ export const VideoSection: React.FC<{ onOpenMenu: () => void }> = ({ onOpenMenu 
 
         {/* Column 3 */}
         <div className="flex-1 flex flex-col gap-4 pt-0 md:pt-[280px]">
-          <Placeholder src="/Archive 2/DSC08012.JPG" className="h-[250px] md:h-[300px]" />
+          <Placeholder src="/WhatsApp Unknown 2026-10-01 at 8.48.41 PM/WhatsApp Image 2026-10-01 at 8.45.45 PM (5).jpeg" className="h-[250px] md:h-[300px]" />
           <Placeholder src="/Archive 2/DSC08022.JPG" className="h-[300px] md:h-[380px]" />
         </div>
 
