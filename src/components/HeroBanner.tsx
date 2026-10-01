@@ -1209,8 +1209,8 @@ export const HeroBanner: React.FC = () => {
   return (
     <>
       {/* ======================================================
-          FAST-FOOD LOADER
-          ====================================================== */}
+    SANDWICH LOADER
+    ====================================================== */}
 
       <div
         ref={loaderRef}
@@ -1219,25 +1219,27 @@ export const HeroBanner: React.FC = () => {
       >
         <div className="bites-food-loader">
 
-          {/* Top bun */}
-          <div className="loader-bun-top">
-            <span className="sesame s1" />
-            <span className="sesame s2" />
-            <span className="sesame s3" />
-            <span className="sesame s4" />
+          {/* Top toasted bread */}
+          <div className="loader-bread-top">
+            <span className="toast-line t1" />
+            <span className="toast-line t2" />
+            <span className="toast-line t3" />
           </div>
 
-          {/* Lettuce */}
-          <div className="loader-lettuce" />
+          {/* Green chutney / lettuce */}
+          <div className="loader-green-layer" />
+
+          {/* Vegetable filling */}
+          <div className="loader-veg-layer" />
 
           {/* Cheese */}
           <div className="loader-cheese" />
 
-          {/* Patty */}
-          <div className="loader-patty" />
+          {/* Main sandwich filling */}
+          <div className="loader-filling" />
 
-          {/* Bottom bun */}
-          <div className="loader-bun-bottom" />
+          {/* Bottom toasted bread */}
+          <div className="loader-bread-bottom" />
 
           {/* Loading dots */}
           <div className="loader-dots">
@@ -1245,9 +1247,9 @@ export const HeroBanner: React.FC = () => {
             <span />
             <span />
           </div>
+
         </div>
       </div>
-
       {/* ======================================================
           HERO SECTION
           ====================================================== */}
@@ -1399,54 +1401,373 @@ export const HeroBanner: React.FC = () => {
         }
 
         /* ====================================================
-           BURGER LOADER
-           ==================================================== */
+   SANDWICH LOADER
+   ==================================================== */
 
-        .bites-food-loader {
-          width: 82px;
+.bites-food-loader {
+  width: 92px;
 
-          display: flex;
-          flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-          align-items: center;
+  align-items: center;
 
-          position: relative;
+  position: relative;
 
-          animation:
-            burger-loader-bounce
-            1.2s
-            ease-in-out
-            infinite;
-        }
+  animation:
+    sandwich-loader-bounce
+    1.2s
+    ease-in-out
+    infinite;
+}
 
-        /* ====================================================
-           TOP BUN
-           ==================================================== */
+/* ====================================================
+   TOP TOASTED BREAD
+   ==================================================== */
 
-        .loader-bun-top {
-          width: 76px;
-          height: 34px;
+.loader-bread-top {
+  width: 82px;
+  height: 30px;
 
-          position: relative;
+  position: relative;
 
-          background: currentColor;
+  background: currentColor;
 
-          border-radius:
-            42px
-            42px
-            12px
-            12px;
+  border-radius:
+    7px
+    7px
+    3px
+    3px;
 
-          transform-origin:
-            center bottom;
+  transform-origin:
+    center bottom;
 
-          animation:
-            bun-top-animation
-            1.2s
-            ease-in-out
-            infinite;
-        }
+  animation:
+    bread-top-animation
+    1.2s
+    ease-in-out
+    infinite;
+}
 
+/* Toasted bread inner line */
+
+.loader-bread-top::after {
+  content: "";
+
+  position: absolute;
+
+  left: 8px;
+  right: 8px;
+  bottom: 5px;
+
+  height: 2px;
+
+  border-radius: 999px;
+
+  background: currentColor;
+
+  opacity: 0.45;
+}
+
+/* ====================================================
+   TOAST MARKS
+   ==================================================== */
+
+.toast-line {
+  position: absolute;
+
+  width: 9px;
+  height: 2px;
+
+  border-radius: 999px;
+
+  background: #ffffff;
+
+  opacity: 0.8;
+
+  transform: rotate(-18deg);
+}
+
+.t1 {
+  left: 19px;
+  top: 9px;
+}
+
+.t2 {
+  left: 38px;
+  top: 6px;
+
+  transform: rotate(12deg);
+}
+
+.t3 {
+  right: 19px;
+  top: 10px;
+
+  transform: rotate(-10deg);
+}
+
+/* ====================================================
+   GREEN CHUTNEY / LETTUCE
+   ==================================================== */
+
+.loader-green-layer {
+  width: 88px;
+  height: 7px;
+
+  margin-top: 2px;
+
+  background: currentColor;
+
+  clip-path:
+    polygon(
+      0 30%,
+      8% 85%,
+      17% 25%,
+      27% 90%,
+      38% 30%,
+      48% 85%,
+      59% 25%,
+      70% 90%,
+      81% 25%,
+      91% 80%,
+      100% 30%,
+      100% 100%,
+      0 100%
+    );
+
+  animation:
+    sandwich-layer-animation
+    1.2s
+    ease-in-out
+    infinite;
+}
+
+/* ====================================================
+   VEGETABLE LAYER
+   ==================================================== */
+
+.loader-veg-layer {
+  width: 76px;
+  height: 8px;
+
+  margin-top: 1px;
+
+  background: currentColor;
+
+  border-radius: 3px;
+
+  position: relative;
+}
+
+/* Vegetable cuts */
+
+.loader-veg-layer::before {
+  content: "";
+
+  position: absolute;
+
+  left: 10px;
+  right: 10px;
+  top: 3px;
+
+  height: 2px;
+
+  border-radius: 999px;
+
+  background: #ffffff;
+
+  opacity: 0.35;
+
+  box-shadow:
+    15px 0 0 #ffffff,
+    30px 0 0 #ffffff;
+}
+
+/* ====================================================
+   CHEESE
+   ==================================================== */
+
+.loader-cheese {
+  width: 82px;
+  height: 7px;
+
+  margin-top: 1px;
+
+  background: currentColor;
+
+  clip-path:
+    polygon(
+      0 0,
+      100% 0,
+      93% 100%,
+      78% 35%,
+      61% 100%,
+      45% 35%,
+      29% 100%,
+      14% 35%
+    );
+}
+
+/* ====================================================
+   MAIN FILLING
+   ==================================================== */
+
+.loader-filling {
+  width: 80px;
+  height: 13px;
+
+  margin-top: 1px;
+
+  border-radius: 3px;
+
+  background: currentColor;
+
+  animation:
+    filling-animation
+    1.2s
+    ease-in-out
+    infinite;
+}
+
+/* ====================================================
+   BOTTOM TOASTED BREAD
+   ==================================================== */
+
+.loader-bread-bottom {
+  width: 82px;
+  height: 19px;
+
+  margin-top: 2px;
+
+  background: currentColor;
+
+  border-radius:
+    2px
+    2px
+    7px
+    7px;
+
+  position: relative;
+}
+
+/* Bottom bread toasted line */
+
+.loader-bread-bottom::after {
+  content: "";
+
+  position: absolute;
+
+  left: 8px;
+  right: 8px;
+  top: 4px;
+
+  height: 2px;
+
+  border-radius: 999px;
+
+  background: currentColor;
+
+  opacity: 0.4;
+}
+
+/* ====================================================
+   LOADING DOTS
+   ==================================================== */
+
+.loader-dots {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  margin-top: 18px;
+}
+
+.loader-dots span {
+  width: 5px;
+  height: 5px;
+
+  border-radius: 50%;
+
+  background: currentColor;
+
+  animation:
+    sandwich-dot-animation
+    1s
+    ease-in-out
+    infinite;
+}
+
+.loader-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.loader-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* ====================================================
+   ANIMATIONS
+   ==================================================== */
+
+@keyframes sandwich-loader-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes bread-top-animation {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+
+  50% {
+    transform: scaleX(0.96);
+  }
+}
+
+@keyframes sandwich-layer-animation {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes filling-animation {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+
+  50% {
+    transform: scaleX(0.94);
+  }
+}
+
+@keyframes sandwich-dot-animation {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
         /* ====================================================
            SESAME SEEDS
            ==================================================== */

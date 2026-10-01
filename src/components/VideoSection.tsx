@@ -46,7 +46,7 @@ export const VideoSection: React.FC<{ onOpenMenu: () => void }> = ({ onOpenMenu 
         {/* Column 2 */}
         <div className="flex-1 flex flex-col gap-4 pt-0 md:pt-[380px]">
           <Placeholder src="/Archive 2/DSC07998.JPG" className="h-[300px] md:h-[350px]" />
-          <Placeholder src="/Archive 2/DSC08005.JPG" className="h-[200px] md:h-[250px]" />
+          <Placeholder src="/WhatsApp Unknown 2026-10-01 at 8.48.41 PM/WhatsApp Image 2026-10-01 at 8.45.45 PM (7).jpeg" className="h-[200px] md:h-[250px]" />
         </div>
 
         {/* Column 3 */}
@@ -60,7 +60,8 @@ export const VideoSection: React.FC<{ onOpenMenu: () => void }> = ({ onOpenMenu 
           <div className="flex flex-col gap-5 px-2 mb-6">
 
           </div>
-          <Placeholder src="/Archive 2/DSC08038.JPG" className="h-[350px] md:h-[450px]" />
+          <Placeholder src="/WhatsApp Unknown 2026-10-01 at 8.48.41 PM\WhatsApp Image 2026-10-01 at 8.45.45 PM (11).jpeg" className="h-[350px] md:h-[450px]" />
+          <Placeholder src="/WhatsApp Unknown 2026-10-01 at 8.48.41 PM\WhatsApp Image 2026-10-01 at 8.45.45 PM (3).jpeg" className="h-[150px] md:h-[250px]" />
         </div>
 
         {/* Column 5 */}
