@@ -1,120 +1,272 @@
 import React, { useEffect, useRef } from "react";
 
-const FRAME_COUNT = 273;
+/*
+|--------------------------------------------------------------------------
+| HERO FRAME SETTINGS
+|--------------------------------------------------------------------------
+|
+| Original source:
+| 273 frames:
+| 001 → 273
+|
+| We use every second frame:
+| 001, 003, 005 ... 273
+|
+| Total displayed frames:
+| 137
+|
+*/
+
+const SOURCE_FRAME_COUNT = 273;
+const FRAME_STEP = 2;
+
+const FRAME_COUNT =
+  Math.floor((SOURCE_FRAME_COUNT - 1) / FRAME_STEP) + 1;
+
 const FRAME_FOLDER = "/hero-webp";
 const FRAME_PREFIX = "ezgif-frame-";
 
-const MAX_CONCURRENT_LOADS = 4;
+/*
+|--------------------------------------------------------------------------
+| LOADING SETTINGS
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * Number of frames needed before the loader disappears.
+ *
+ * These are the first 20 frames:
+ *
+ * 001
+ * 003
+ * 005
+ * ...
+ * 039
+ *
+ * After these are ready, the remaining frames continue loading
+ * in the background.
+ */
+const CRITICAL_FRAMES = 20;
+
+/*
+ * More concurrent requests = faster initial loading.
+ *
+ * 6 is a good balance for desktop/mobile.
+ */
+const MAX_CONCURRENT_LOADS = 6;
+
+/*
+|--------------------------------------------------------------------------
+| HERO SETTINGS
+|--------------------------------------------------------------------------
+*/
 
 const HERO_HEIGHT_VH = 300;
 
-// Center title disappears during the first 12% of hero scrolling
+/*
+ * Center title fades during the first 12% of the hero.
+ */
 const TITLE_FADE_END = 0.12;
 
-// Loader settings
-const LOADER_MIN_TIME = 450;
-const LOADER_MAX_TIME = 120000; // 2 minutes safety limit
+/*
+ * Loader doesn't disappear instantly even if the first frame
+ * is extremely fast.
+ */
+const LOADER_MIN_TIME = 350;
 
-const HeroBanner: React.FC = () => {
-  /* =========================================================
-     DOM REFS
-  ========================================================= */
+/*
+ * Safety timeout.
+ *
+ * If the network is extremely bad, don't trap the visitor
+ * behind the loader forever.
+ */
+const LOADER_MAX_TIME = 30000;
 
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const titleRef = useRef<HTMLDivElement | null>(null);
-  const loaderRef = useRef<HTMLDivElement | null>(null);
+export const HeroBanner: React.FC = () => {
+  /*
+  |--------------------------------------------------------------------------
+  | DOM REFS
+  |--------------------------------------------------------------------------
+  */
 
-  /* =========================================================
-     CANVAS
-  ========================================================= */
+  const sectionRef =
+    useRef<HTMLElement | null>(null);
 
-  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const canvasRef =
+    useRef<HTMLCanvasElement | null>(null);
 
-  /* =========================================================
-     IMAGE CACHE
-     
-     We intentionally keep ALL 273 images after loading.
-     This prevents the browser from having to reload frames
-     while the user scrolls.
-  ========================================================= */
+  const titleRef =
+    useRef<HTMLDivElement | null>(null);
 
-  const cacheRef = useRef<Map<number, HTMLImageElement>>(new Map());
+  const loaderRef =
+    useRef<HTMLDivElement | null>(null);
 
-  /* =========================================================
-     LOADING SYSTEM
-  ========================================================= */
+  /*
+  |--------------------------------------------------------------------------
+  | CANVAS
+  |--------------------------------------------------------------------------
+  */
 
-  const loadingRef = useRef<Set<number>>(new Set());
-  const queueRef = useRef<number[]>([]);
-  const activeLoadsRef = useRef(0);
+  const ctxRef =
+    useRef<CanvasRenderingContext2D | null>(null);
 
-  const loadedFramesRef = useRef<Set<number>>(new Set());
+  /*
+  |--------------------------------------------------------------------------
+  | IMAGE CACHE
+  |--------------------------------------------------------------------------
+  */
 
-  /* =========================================================
-     FRAME STATE
-  ========================================================= */
+  const cacheRef =
+    useRef<Map<number, HTMLImageElement>>(
+      new Map()
+    );
 
-  const targetFrameRef = useRef(1);
-  const displayedFrameRef = useRef(1);
+  /*
+  |--------------------------------------------------------------------------
+  | LOADING SYSTEM
+  |--------------------------------------------------------------------------
+  */
 
-  /* =========================================================
-     RAF
-  ========================================================= */
+  const loadingRef =
+    useRef<Set<number>>(new Set());
 
-  const scrollRafRef = useRef<number | null>(null);
+  const queueRef =
+    useRef<number[]>([]);
 
-  /* =========================================================
-     LIFECYCLE
-  ========================================================= */
+  const activeLoadsRef =
+    useRef(0);
 
-  const destroyedRef = useRef(false);
+  /*
+  |--------------------------------------------------------------------------
+  | LOADED FRAME TRACKING
+  |--------------------------------------------------------------------------
+  */
 
-  /* =========================================================
-     LOADER
-  ========================================================= */
+  const loadedFramesRef =
+    useRef<Set<number>>(new Set());
 
-  const loaderSafetyTimerRef = useRef<number | null>(null);
+  /*
+  |--------------------------------------------------------------------------
+  | FRAME STATE
+  |--------------------------------------------------------------------------
+  */
 
-  /* =========================================================
-     INITIALIZATION
-  ========================================================= */
+  const targetFrameRef =
+    useRef(1);
+
+  const displayedFrameRef =
+    useRef(1);
+
+  /*
+  |--------------------------------------------------------------------------
+  | SCROLL RAF
+  |--------------------------------------------------------------------------
+  */
+
+  const scrollRafRef =
+    useRef<number | null>(null);
+
+  /*
+  |--------------------------------------------------------------------------
+  | LIFECYCLE
+  |--------------------------------------------------------------------------
+  */
+
+  const destroyedRef =
+    useRef(false);
+
+  /*
+  |--------------------------------------------------------------------------
+  | LOADER
+  |--------------------------------------------------------------------------
+  */
+
+  const loaderSafetyTimerRef =
+    useRef<number | null>(null);
+
+  /*
+  |--------------------------------------------------------------------------
+  | CRITICAL LOADING STATE
+  |--------------------------------------------------------------------------
+  */
+
+  const criticalLoadedRef =
+    useRef(false);
+
+  /*
+  |--------------------------------------------------------------------------
+  | INITIALIZATION
+  |--------------------------------------------------------------------------
+  */
 
   useEffect(() => {
     const section = sectionRef.current;
     const canvas = canvasRef.current;
 
-    if (!section || !canvas) return;
+    if (!section || !canvas) {
+      return;
+    }
 
     destroyedRef.current = false;
 
-    const loaderStartedAt = performance.now();
+    const loaderStartedAt =
+      performance.now();
 
-    /* =======================================================
-       CANVAS CONTEXT
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | CANVAS CONTEXT
+    |--------------------------------------------------------------------------
+    */
 
     const ctx = canvas.getContext("2d", {
       alpha: false,
       desynchronized: true,
     });
 
-    if (!ctx) return;
+    if (!ctx) {
+      return;
+    }
 
     ctxRef.current = ctx;
 
-    /* =======================================================
-       LOADER
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | SOURCE FRAME NUMBER
+    |--------------------------------------------------------------------------
+    |
+    | Display frame 1 → source 001
+    | Display frame 2 → source 003
+    | Display frame 3 → source 005
+    |
+    */
+
+    const getSourceFrameNumber = (
+      displayFrame: number
+    ) => {
+      return 1 + (displayFrame - 1) * FRAME_STEP;
+    };
+
+    /*
+    |--------------------------------------------------------------------------
+    | HIDE LOADER
+    |--------------------------------------------------------------------------
+    */
 
     const hideLoader = () => {
-      if (destroyedRef.current) return;
+      if (destroyedRef.current) {
+        return;
+      }
 
-      const loader = loaderRef.current;
+      const loader =
+        loaderRef.current;
 
-      if (!loader) return;
+      if (!loader) {
+        return;
+      }
 
-      const elapsed = performance.now() - loaderStartedAt;
+      const elapsed =
+        performance.now() -
+        loaderStartedAt;
 
       const remaining = Math.max(
         0,
@@ -122,94 +274,76 @@ const HeroBanner: React.FC = () => {
       );
 
       window.setTimeout(() => {
-        if (destroyedRef.current) return;
+        if (destroyedRef.current) {
+          return;
+        }
 
         loader.style.opacity = "0";
-        loader.style.visibility = "hidden";
-        loader.style.pointerEvents = "none";
+        loader.style.visibility =
+          "hidden";
+        loader.style.pointerEvents =
+          "none";
       }, remaining);
     };
 
-    /* =======================================================
-       SAFETY TIMEOUT
-       
-       If one frame completely fails to load, don't leave
-       the user stuck forever.
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | SAFETY TIMEOUT
+    |--------------------------------------------------------------------------
+    */
 
-    loaderSafetyTimerRef.current = window.setTimeout(() => {
-      hideLoader();
-    }, LOADER_MAX_TIME);
+    loaderSafetyTimerRef.current =
+      window.setTimeout(() => {
+        hideLoader();
+      }, LOADER_MAX_TIME);
 
-    /* =======================================================
-       CANVAS RESIZE
-       
-       IMPORTANT:
-       The canvas fills the viewport, but the image itself
-       is NEVER stretched.
-       
-       We calculate an object-cover crop in drawFrame().
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | DRAW FRAME
+    |--------------------------------------------------------------------------
+    |
+    | IMPORTANT:
+    |
+    | The image is CROPPED.
+    | It is NOT stretched.
+    | It is NOT distorted.
+    |
+    | This behaves like:
+    |
+    | background-size: cover
+    |
+    */
 
-    const resizeCanvas = () => {
-      if (destroyedRef.current) return;
-
-      const rect = canvas.getBoundingClientRect();
-
-      const dpr = Math.min(
-        window.devicePixelRatio || 1,
-        2
-      );
-
-      const width = Math.max(
-        1,
-        Math.round(rect.width * dpr)
-      );
-
-      const height = Math.max(
-        1,
-        Math.round(rect.height * dpr)
-      );
+    const drawFrame = (
+      frameNumber: number
+    ) => {
+      const context =
+        ctxRef.current;
 
       if (
-        canvas.width !== width ||
-        canvas.height !== height
+        !context ||
+        destroyedRef.current
       ) {
-        canvas.width = width;
-        canvas.height = height;
+        return;
       }
 
-      drawFrame(displayedFrameRef.current);
-    };
+      const image =
+        cacheRef.current.get(
+          frameNumber
+        );
 
-    /* =======================================================
-       DRAW FRAME
-       
-       OBJECT-COVER BEHAVIOR:
-       
-       The source image keeps its original aspect ratio.
-       We crop the excess instead of resizing/distorting it.
-       
-       This means:
-       
-       Desktop  → crop vertically/horizontally as needed
-       Mobile   → crop more aggressively because viewport
-                  is narrower/taller
-       
-       The actual image is NEVER stretched.
-    ======================================================= */
+      if (
+        !image ||
+        !image.complete
+      ) {
+        return;
+      }
 
-    const drawFrame = (frameNumber: number) => {
-      const context = ctxRef.current;
+      const canvasWidth =
+        canvas.width;
 
-      if (!context || destroyedRef.current) return;
-
-      const image = cacheRef.current.get(frameNumber);
-
-      if (!image || !image.complete) return;
-
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
+      const canvasHeight =
+        canvas.height;
 
       if (
         canvasWidth <= 0 ||
@@ -220,61 +354,73 @@ const HeroBanner: React.FC = () => {
         return;
       }
 
-      const imageWidth = image.naturalWidth;
-      const imageHeight = image.naturalHeight;
+      const imageWidth =
+        image.naturalWidth;
 
-      /* -----------------------------------------------------
-         OBJECT COVER
+      const imageHeight =
+        image.naturalHeight;
 
-         scale = MAX(
-           canvasWidth / imageWidth,
-           canvasHeight / imageHeight
-         )
-
-         We don't actually scale the source manually.
-         Instead we calculate the source crop rectangle.
-      ----------------------------------------------------- */
+      /*
+      |--------------------------------------------------------------------------
+      | OBJECT-COVER CROP
+      |--------------------------------------------------------------------------
+      */
 
       const canvasRatio =
-        canvasWidth / canvasHeight;
+        canvasWidth /
+        canvasHeight;
 
       const imageRatio =
-        imageWidth / imageHeight;
+        imageWidth /
+        imageHeight;
 
       let sourceX = 0;
       let sourceY = 0;
-      let sourceWidth = imageWidth;
-      let sourceHeight = imageHeight;
 
-      if (imageRatio > canvasRatio) {
-        /*
-          Image is wider than viewport.
+      let sourceWidth =
+        imageWidth;
 
-          Crop left + right.
-        */
+      let sourceHeight =
+        imageHeight;
 
+      /*
+       * Image is wider than viewport.
+       * Crop left/right.
+       */
+      if (
+        imageRatio >
+        canvasRatio
+      ) {
         sourceWidth =
-          imageHeight * canvasRatio;
+          imageHeight *
+          canvasRatio;
 
         sourceX =
-          (imageWidth - sourceWidth) / 2;
-      } else {
-        /*
-          Image is taller/narrower than viewport.
-
-          Crop top + bottom.
-        */
-
-        sourceHeight =
-          imageWidth / canvasRatio;
-
-        sourceY =
-          (imageHeight - sourceHeight) / 2;
+          (imageWidth -
+            sourceWidth) /
+          2;
       }
 
-      /* -----------------------------------------------------
-         CLEAR
-      ----------------------------------------------------- */
+      /*
+       * Image is taller than viewport.
+       * Crop top/bottom.
+       */
+      else {
+        sourceHeight =
+          imageWidth /
+          canvasRatio;
+
+        sourceY =
+          (imageHeight -
+            sourceHeight) /
+          2;
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | DRAW
+      |--------------------------------------------------------------------------
+      */
 
       context.clearRect(
         0,
@@ -282,16 +428,6 @@ const HeroBanner: React.FC = () => {
         canvasWidth,
         canvasHeight
       );
-
-      /* -----------------------------------------------------
-         DRAW
-
-         destination exactly equals canvas.
-
-         Because sourceWidth/sourceHeight were calculated
-         using the same aspect ratio as the canvas, there
-         is NO distortion.
-      ----------------------------------------------------- */
 
       context.drawImage(
         image,
@@ -305,53 +441,91 @@ const HeroBanner: React.FC = () => {
         canvasHeight
       );
 
-      displayedFrameRef.current = frameNumber;
+      displayedFrameRef.current =
+        frameNumber;
     };
 
-    /* =======================================================
-       CHECK ALL FRAMES
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | CHECK CRITICAL FRAMES
+    |--------------------------------------------------------------------------
+    */
 
-    const checkAllFramesLoaded = () => {
-      if (destroyedRef.current) return;
-
+    const checkCriticalFrames = () => {
       if (
-        loadedFramesRef.current.size !== FRAME_COUNT
+        destroyedRef.current ||
+        criticalLoadedRef.current
       ) {
         return;
       }
 
       /*
-        Every frame has successfully decoded.
-      */
+       * We only need the first 20 frames
+       * before revealing the website.
+       */
+
+      for (
+        let frame = 1;
+        frame <= CRITICAL_FRAMES;
+        frame++
+      ) {
+        if (
+          !loadedFramesRef.current.has(
+            frame
+          )
+        ) {
+          return;
+        }
+      }
+
+      /*
+       * Critical frames are ready.
+       */
+
+      criticalLoadedRef.current =
+        true;
+
+      /*
+       * Make sure frame 1 is visible.
+       */
+
+      if (
+        cacheRef.current.has(1)
+      ) {
+        drawFrame(1);
+      }
+
+      /*
+       * Hide loader.
+       */
 
       hideLoader();
 
       if (
-        loaderSafetyTimerRef.current !== null
+        loaderSafetyTimerRef.current !==
+        null
       ) {
         window.clearTimeout(
           loaderSafetyTimerRef.current
         );
 
-        loaderSafetyTimerRef.current = null;
-      }
-
-      /*
-        Make sure first frame is visible.
-      */
-
-      if (cacheRef.current.has(1)) {
-        drawFrame(1);
+        loaderSafetyTimerRef.current =
+          null;
       }
     };
 
-    /* =======================================================
-       LOAD SINGLE FRAME
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD FRAME
+    |--------------------------------------------------------------------------
+    */
 
-    const loadFrame = (frameNumber: number) => {
-      if (destroyedRef.current) return;
+    const loadFrame = (
+      frameNumber: number
+    ) => {
+      if (destroyedRef.current) {
+        return;
+      }
 
       if (
         frameNumber < 1 ||
@@ -361,42 +535,83 @@ const HeroBanner: React.FC = () => {
       }
 
       /*
-        Already loaded
-      */
+       * Already loaded.
+       */
 
-      if (cacheRef.current.has(frameNumber)) {
+      if (
+        cacheRef.current.has(
+          frameNumber
+        )
+      ) {
         return;
       }
 
       /*
-        Already loading
-      */
+       * Already loading.
+       */
 
-      if (loadingRef.current.has(frameNumber)) {
+      if (
+        loadingRef.current.has(
+          frameNumber
+        )
+      ) {
         return;
       }
 
-      loadingRef.current.add(frameNumber);
+      loadingRef.current.add(
+        frameNumber
+      );
+
       activeLoadsRef.current += 1;
 
-      const image = new Image();
+      const image =
+        new Image();
 
       image.decoding = "async";
 
-      image.src =
-        `${FRAME_FOLDER}/${FRAME_PREFIX}` +
-        `${String(frameNumber).padStart(3, "0")}.webp`;
+      /*
+      |--------------------------------------------------------------------------
+      | SOURCE FILE
+      |--------------------------------------------------------------------------
+      */
 
-      const finishLoading = () => {
-        activeLoadsRef.current = Math.max(
-          0,
-          activeLoadsRef.current - 1
+      const sourceFrame =
+        getSourceFrameNumber(
+          frameNumber
         );
 
-        loadingRef.current.delete(frameNumber);
+      image.src =
+        `${FRAME_FOLDER}/${FRAME_PREFIX}` +
+        `${String(sourceFrame).padStart(
+          3,
+          "0"
+        )}.webp`;
+
+      /*
+      |--------------------------------------------------------------------------
+      | FINISH
+      |--------------------------------------------------------------------------
+      */
+
+      const finishLoading = () => {
+        activeLoadsRef.current =
+          Math.max(
+            0,
+            activeLoadsRef.current - 1
+          );
+
+        loadingRef.current.delete(
+          frameNumber
+        );
 
         processQueue();
       };
+
+      /*
+      |--------------------------------------------------------------------------
+      | SUCCESS
+      |--------------------------------------------------------------------------
+      */
 
       image.onload = async () => {
         if (destroyedRef.current) {
@@ -406,18 +621,20 @@ const HeroBanner: React.FC = () => {
 
         try {
           /*
-            Force browser decode before considering the
-            frame ready.
-          */
+           * Decode before marking ready.
+           */
 
-          if (typeof image.decode === "function") {
+          if (
+            typeof image.decode ===
+            "function"
+          ) {
             try {
               await image.decode();
             } catch {
               /*
-                Some browsers may throw even though the image
-                is already usable.
-              */
+               * Some browsers may reject decode
+               * while the image itself is usable.
+               */
             }
           }
 
@@ -425,6 +642,10 @@ const HeroBanner: React.FC = () => {
             finishLoading();
             return;
           }
+
+          /*
+           * Store image.
+           */
 
           cacheRef.current.set(
             frameNumber,
@@ -436,9 +657,9 @@ const HeroBanner: React.FC = () => {
           );
 
           /*
-            If this is the currently requested frame,
-            draw it immediately.
-          */
+           * If this is currently requested,
+           * draw immediately.
+           */
 
           if (
             frameNumber ===
@@ -448,32 +669,35 @@ const HeroBanner: React.FC = () => {
           }
 
           /*
-            Check whether ALL 273 frames are ready.
-          */
+           * Check whether we can remove loader.
+           */
 
-          checkAllFramesLoaded();
+          checkCriticalFrames();
         } finally {
           finishLoading();
         }
       };
+
+      /*
+      |--------------------------------------------------------------------------
+      | ERROR
+      |--------------------------------------------------------------------------
+      */
 
       image.onerror = () => {
         console.warn(
           `Failed to load hero frame ${frameNumber}`
         );
 
-        /*
-          Don't mark a failed image as loaded.
-          It can be retried if needed.
-        */
-
         finishLoading();
 
         /*
-          Requeue failed frame.
-        */
+         * Retry later.
+         */
 
-        if (!destroyedRef.current) {
+        if (
+          !destroyedRef.current
+        ) {
           queueRef.current.push(
             frameNumber
           );
@@ -483,46 +707,70 @@ const HeroBanner: React.FC = () => {
       };
     };
 
-    /* =======================================================
-       PROCESS QUEUE
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | QUEUE PROCESSOR
+    |--------------------------------------------------------------------------
+    */
 
     const processQueue = () => {
-      if (destroyedRef.current) return;
+      if (destroyedRef.current) {
+        return;
+      }
 
       while (
         activeLoadsRef.current <
         MAX_CONCURRENT_LOADS &&
-        queueRef.current.length > 0
+        queueRef.current.length >
+        0
       ) {
         /*
-          Remove duplicates.
-        */
+         * Remove duplicate entries.
+         */
 
-        const uniqueQueue = [
-          ...new Set(queueRef.current),
+        queueRef.current = [
+          ...new Set(
+            queueRef.current
+          ),
         ];
 
-        queueRef.current = uniqueQueue;
-
         /*
-          Prioritize the current target frame.
-        */
+         * IMPORTANT:
+         *
+         * Once the loader disappears, prioritize
+         * the frame nearest to where the user is
+         * currently scrolling.
+         *
+         * This makes fast scrolling much smoother.
+         */
 
-        uniqueQueue.sort(
-          (a, b) =>
-            Math.abs(
-              a - targetFrameRef.current
-            ) -
-            Math.abs(
-              b - targetFrameRef.current
-            )
+        queueRef.current.sort(
+          (a, b) => {
+            const distanceA =
+              Math.abs(
+                a -
+                targetFrameRef.current
+              );
+
+            const distanceB =
+              Math.abs(
+                b -
+                targetFrameRef.current
+              );
+
+            return (
+              distanceA -
+              distanceB
+            );
+          }
         );
 
         const nextFrame =
           queueRef.current.shift();
 
-        if (nextFrame === undefined) {
+        if (
+          nextFrame === undefined
+        ) {
           break;
         }
 
@@ -530,9 +778,11 @@ const HeroBanner: React.FC = () => {
       }
     };
 
-    /* =======================================================
-       ENQUEUE FRAME
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | ENQUEUE
+    |--------------------------------------------------------------------------
+    */
 
     const enqueueFrame = (
       frameNumber: number
@@ -545,30 +795,71 @@ const HeroBanner: React.FC = () => {
       }
 
       if (
-        cacheRef.current.has(frameNumber) ||
-        loadingRef.current.has(frameNumber)
+        cacheRef.current.has(
+          frameNumber
+        )
       ) {
         return;
       }
 
       if (
-        queueRef.current.includes(frameNumber)
+        loadingRef.current.has(
+          frameNumber
+        )
       ) {
         return;
       }
 
-      queueRef.current.push(frameNumber);
+      if (
+        queueRef.current.includes(
+          frameNumber
+        )
+      ) {
+        return;
+      }
+
+      queueRef.current.push(
+        frameNumber
+      );
     };
 
-    /* =======================================================
-       PRELOAD ALL FRAMES
-       
-       The loader remains until ALL frames are decoded.
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | PRELOAD
+    |--------------------------------------------------------------------------
+    |
+    | Critical frames first.
+    |
+    | Then all remaining frames.
+    |
+    */
 
-    const preloadAllFrames = () => {
+    const preloadFrames = () => {
+      /*
+       * FIRST:
+       * Load critical frames in order.
+       */
+
       for (
         let frame = 1;
+        frame <=
+        Math.min(
+          CRITICAL_FRAMES,
+          FRAME_COUNT
+        );
+        frame++
+      ) {
+        enqueueFrame(frame);
+      }
+
+      /*
+       * THEN:
+       * Queue remaining frames.
+       */
+
+      for (
+        let frame =
+          CRITICAL_FRAMES + 1;
         frame <= FRAME_COUNT;
         frame++
       ) {
@@ -578,47 +869,74 @@ const HeroBanner: React.FC = () => {
       processQueue();
     };
 
-    /* =======================================================
-       SHOW FRAME
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW FRAME
+    |--------------------------------------------------------------------------
+    */
 
     const showFrame = (
       frameNumber: number
     ) => {
-      const clampedFrame = Math.max(
-        1,
-        Math.min(
-          FRAME_COUNT,
-          Math.round(frameNumber)
-        )
-      );
+      const clampedFrame =
+        Math.max(
+          1,
+          Math.min(
+            FRAME_COUNT,
+            Math.round(
+              frameNumber
+            )
+          )
+        );
 
       targetFrameRef.current =
         clampedFrame;
 
       /*
-        Since all frames are loaded before the user
-        can interact with the page, this should normally
-        always be available.
-      */
+       * Draw only the exact target.
+       *
+       * We intentionally DON'T use the nearest
+       * loaded frame because that can cause visible
+       * frame jumping.
+       */
 
       if (
         cacheRef.current.has(
           clampedFrame
         )
       ) {
-        drawFrame(clampedFrame);
+        drawFrame(
+          clampedFrame
+        );
+      }
+
+      /*
+       * If the requested frame isn't loaded,
+       * prioritize it.
+       */
+
+      else {
+        enqueueFrame(
+          clampedFrame
+        );
+
+        processQueue();
       }
     };
 
-    /* =======================================================
-       UPDATE SCROLL
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | SCROLL
+    |--------------------------------------------------------------------------
+    */
 
     const updateScroll = () => {
-      if (destroyedRef.current) return;
+      if (destroyedRef.current) {
+        return;
+      }
 
-      scrollRafRef.current = null;
+      scrollRafRef.current =
+        null;
 
       const rect =
         section.getBoundingClientRect();
@@ -627,29 +945,32 @@ const HeroBanner: React.FC = () => {
         section.offsetHeight -
         window.innerHeight;
 
-      if (scrollableDistance <= 0) {
+      if (
+        scrollableDistance <= 0
+      ) {
         return;
       }
 
       /*
-        0 = hero starts
-        1 = hero ends
+       * 0 → beginning
+       * 1 → end
+       */
+
+      const progress =
+        Math.min(
+          1,
+          Math.max(
+            0,
+            -rect.top /
+            scrollableDistance
+          )
+        );
+
+      /*
+      |--------------------------------------------------------------------------
+      | FRAME
+      |--------------------------------------------------------------------------
       */
-
-      const progress = Math.min(
-        1,
-        Math.max(
-          0,
-          -rect.top / scrollableDistance
-        )
-      );
-
-      /* -----------------------------------------------------
-         FRAME
-
-         0% scroll → frame 1
-         100% scroll → frame 273
-      ----------------------------------------------------- */
 
       const frame =
         1 +
@@ -658,11 +979,11 @@ const HeroBanner: React.FC = () => {
 
       showFrame(frame);
 
-      /* -----------------------------------------------------
-         CENTER TITLE
-
-         Fade away during first 12%.
-      ----------------------------------------------------- */
+      /*
+      |--------------------------------------------------------------------------
+      | TITLE
+      |--------------------------------------------------------------------------
+      */
 
       const title =
         titleRef.current;
@@ -678,51 +999,114 @@ const HeroBanner: React.FC = () => {
             )
           );
 
-        const opacity =
-          1 - fadeProgress;
-
-        const scale =
-          1 +
-          fadeProgress * 0.08;
-
         title.style.opacity =
-          String(opacity);
+          String(
+            1 -
+            fadeProgress
+          );
 
         title.style.transform =
-          `scale(${scale})`;
+          `scale(${1 +
+          fadeProgress *
+          0.08
+          })`;
       }
     };
 
-    /* =======================================================
-       REQUEST SCROLL RAF
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | REQUEST SCROLL RAF
+    |--------------------------------------------------------------------------
+    */
 
-    const requestScrollUpdate = () => {
-      if (destroyedRef.current) return;
+    const requestScrollUpdate =
+      () => {
+        if (
+          destroyedRef.current
+        ) {
+          return;
+        }
 
+        if (
+          scrollRafRef.current !==
+          null
+        ) {
+          return;
+        }
+
+        scrollRafRef.current =
+          window.requestAnimationFrame(
+            updateScroll
+          );
+      };
+
+    /*
+    |--------------------------------------------------------------------------
+    | RESIZE
+    |--------------------------------------------------------------------------
+    */
+
+    const resizeCanvas = () => {
       if (
-        scrollRafRef.current !== null
+        destroyedRef.current
       ) {
         return;
       }
 
-      scrollRafRef.current =
-        window.requestAnimationFrame(
-          updateScroll
+      const rect =
+        canvas.getBoundingClientRect();
+
+      /*
+       * Cap DPR at 2.
+       *
+       * This prevents huge 3x/4x/5x canvases
+       * on high-density mobile devices.
+       */
+
+      const dpr =
+        Math.min(
+          window.devicePixelRatio ||
+          1,
+          2
         );
+
+      const width =
+        Math.max(
+          1,
+          Math.round(
+            rect.width * dpr
+          )
+        );
+
+      const height =
+        Math.max(
+          1,
+          Math.round(
+            rect.height * dpr
+          )
+        );
+
+      if (
+        canvas.width !== width ||
+        canvas.height !== height
+      ) {
+        canvas.width =
+          width;
+
+        canvas.height =
+          height;
+      }
+
+      drawFrame(
+        displayedFrameRef.current
+      );
     };
 
-    /* =======================================================
-       RESIZE
-    ======================================================= */
-
-    const handleResize = () => {
-      resizeCanvas();
-    };
-
-    /* =======================================================
-       LISTENERS
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | EVENT LISTENERS
+    |--------------------------------------------------------------------------
+    */
 
     window.addEventListener(
       "scroll",
@@ -734,36 +1118,41 @@ const HeroBanner: React.FC = () => {
 
     window.addEventListener(
       "resize",
-      handleResize,
+      resizeCanvas,
       {
         passive: true,
       }
     );
 
-    /* =======================================================
-       INITIAL CANVAS
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | INITIALIZE
+    |--------------------------------------------------------------------------
+    */
 
     resizeCanvas();
 
-    /* =======================================================
-       START LOADING ALL 273 FRAMES
-    ======================================================= */
+    /*
+     * Start loading.
+     */
 
-    preloadAllFrames();
+    preloadFrames();
 
-    /* =======================================================
-       INITIAL SCROLL POSITION
-    ======================================================= */
+    /*
+     * Initial scroll calculation.
+     */
 
     requestScrollUpdate();
 
-    /* =======================================================
-       CLEANUP
-    ======================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | CLEANUP
+    |--------------------------------------------------------------------------
+    */
 
     return () => {
-      destroyedRef.current = true;
+      destroyedRef.current =
+        true;
 
       window.removeEventListener(
         "scroll",
@@ -772,27 +1161,31 @@ const HeroBanner: React.FC = () => {
 
       window.removeEventListener(
         "resize",
-        handleResize
+        resizeCanvas
       );
 
       if (
-        scrollRafRef.current !== null
+        scrollRafRef.current !==
+        null
       ) {
         window.cancelAnimationFrame(
           scrollRafRef.current
         );
 
-        scrollRafRef.current = null;
+        scrollRafRef.current =
+          null;
       }
 
       if (
-        loaderSafetyTimerRef.current !== null
+        loaderSafetyTimerRef.current !==
+        null
       ) {
         window.clearTimeout(
           loaderSafetyTimerRef.current
         );
 
-        loaderSafetyTimerRef.current = null;
+        loaderSafetyTimerRef.current =
+          null;
       }
 
       queueRef.current = [];
@@ -807,52 +1200,79 @@ const HeroBanner: React.FC = () => {
     };
   }, []);
 
-  /* ===========================================================
-     RENDER
-  =========================================================== */
+  /*
+  |--------------------------------------------------------------------------
+  | RENDER
+  |--------------------------------------------------------------------------
+  */
 
   return (
     <>
-      {/* =====================================================
-          LOADER
-
-          This is ABOVE EVERYTHING including header.
-      ===================================================== */}
+      {/* ======================================================
+          FAST-FOOD LOADER
+          ====================================================== */}
 
       <div
         ref={loaderRef}
         className="bites-loader-screen"
         aria-hidden="true"
       >
-        <div className="bites-loader" />
+        <div className="bites-food-loader">
+
+          {/* Top bun */}
+          <div className="loader-bun-top">
+            <span className="sesame s1" />
+            <span className="sesame s2" />
+            <span className="sesame s3" />
+            <span className="sesame s4" />
+          </div>
+
+          {/* Lettuce */}
+          <div className="loader-lettuce" />
+
+          {/* Cheese */}
+          <div className="loader-cheese" />
+
+          {/* Patty */}
+          <div className="loader-patty" />
+
+          {/* Bottom bun */}
+          <div className="loader-bun-bottom" />
+
+          {/* Loading dots */}
+          <div className="loader-dots">
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
       </div>
 
-      {/* =====================================================
-          HERO
-      ===================================================== */}
+      {/* ======================================================
+          HERO SECTION
+          ====================================================== */}
 
       <section
         id="hero-banner"
         ref={sectionRef}
         className="relative"
         style={{
-          height: `${HERO_HEIGHT_VH}vh`,
+          height:
+            `${HERO_HEIGHT_VH}vh`,
         }}
       >
-        {/* ===================================================
-            FIXED VISUAL AREA
-        =================================================== */}
+        {/* ====================================================
+            FIXED VISUAL
+            ==================================================== */}
 
         <div className="fixed inset-0 z-0 overflow-hidden">
+
           <canvas
             ref={canvasRef}
             className="block h-full w-full"
           />
 
-          {/* =================================================
-              DARK OVERLAY
-          ================================================= */}
-
+          {/* Dark overlay */}
           <div
             className="
               pointer-events-none
@@ -862,9 +1282,9 @@ const HeroBanner: React.FC = () => {
             "
           />
 
-          {/* =================================================
+          {/* ==================================================
               CENTER TITLE
-          ================================================= */}
+              ================================================== */}
 
           <div
             ref={titleRef}
@@ -896,11 +1316,10 @@ const HeroBanner: React.FC = () => {
             />
           </div>
 
-          {/* =================================================
+          {/* ==================================================
               BOTTOM RIGHT LOGO
-
               Hidden on mobile.
-          ================================================= */}
+              ================================================== */}
 
           <div
             id="ec5a4f"
@@ -935,18 +1354,20 @@ const HeroBanner: React.FC = () => {
         </div>
       </section>
 
-      {/* =====================================================
-          LOADER CSS
-      ===================================================== */}
+      {/* ======================================================
+          CSS
+          ====================================================== */}
 
       <style>{`
-        /* =====================================================
+
+        /* ====================================================
            FULL SCREEN LOADER
-        ===================================================== */
+           ==================================================== */
 
         .bites-loader-screen {
           position: fixed;
           inset: 0;
+
           z-index: 999999;
 
           display: flex;
@@ -954,7 +1375,7 @@ const HeroBanner: React.FC = () => {
           justify-content: center;
 
           background: #ffffff;
-          color: #000000;
+          color: #34150F;
 
           opacity: 1;
           visibility: visible;
@@ -962,13 +1383,13 @@ const HeroBanner: React.FC = () => {
           pointer-events: auto;
 
           transition:
-            opacity 0.45s ease,
-            visibility 0.45s ease;
+            opacity 0.4s ease,
+            visibility 0.4s ease;
         }
 
         /*
-          Follow device / browser dark mode.
-        */
+         * Dark mode follows the device.
+         */
 
         @media (prefers-color-scheme: dark) {
           .bites-loader-screen {
@@ -977,126 +1398,365 @@ const HeroBanner: React.FC = () => {
           }
         }
 
-        /* =====================================================
-           LOADER ANIMATION
-        ===================================================== */
+        /* ====================================================
+           BURGER LOADER
+           ==================================================== */
 
-        .bites-loader {
-          width: 60px;
+        .bites-food-loader {
+          width: 82px;
 
           display: flex;
-          align-items: flex-start;
+          flex-direction: column;
 
-          aspect-ratio: 1;
+          align-items: center;
+
+          position: relative;
+
+          animation:
+            burger-loader-bounce
+            1.2s
+            ease-in-out
+            infinite;
         }
 
-        .bites-loader::before,
-        .bites-loader::after {
-          content: "";
+        /* ====================================================
+           TOP BUN
+           ==================================================== */
 
-          flex: 1;
+        .loader-bun-top {
+          width: 76px;
+          height: 34px;
 
-          aspect-ratio: 1;
+          position: relative;
 
-          --g: conic-gradient(
-            from -90deg at 10px 10px,
-            currentColor 90deg,
-            #0000 0
-          );
+          background: currentColor;
+
+          border-radius:
+            42px
+            42px
+            12px
+            12px;
+
+          transform-origin:
+            center bottom;
+
+          animation:
+            bun-top-animation
+            1.2s
+            ease-in-out
+            infinite;
+        }
+
+        /* ====================================================
+           SESAME SEEDS
+           ==================================================== */
+
+        .sesame {
+          position: absolute;
+
+          width: 5px;
+          height: 2px;
+
+          border-radius: 999px;
 
           background:
-            var(--g),
-            var(--g),
-            var(--g);
+            #ffffff;
 
-          filter:
-            drop-shadow(
-              30px 30px 0 currentColor
+          transform:
+            rotate(-20deg);
+        }
+
+        .s1 {
+          top: 9px;
+          left: 17px;
+        }
+
+        .s2 {
+          top: 6px;
+          left: 32px;
+
+          transform:
+            rotate(15deg);
+        }
+
+        .s3 {
+          top: 9px;
+          right: 25px;
+
+          transform:
+            rotate(-10deg);
+        }
+
+        .s4 {
+          top: 15px;
+          right: 14px;
+
+          transform:
+            rotate(20deg);
+        }
+
+        /* ====================================================
+           LETTUCE
+           ==================================================== */
+
+        .loader-lettuce {
+          width: 82px;
+          height: 7px;
+
+          margin-top: -1px;
+
+          background:
+            currentColor;
+
+          border-radius: 999px;
+
+          clip-path:
+            polygon(
+              0 20%,
+              8% 80%,
+              16% 25%,
+              25% 85%,
+              34% 20%,
+              44% 85%,
+              54% 20%,
+              64% 85%,
+              74% 20%,
+              84% 85%,
+              92% 25%,
+              100% 70%,
+              100% 100%,
+              0 100%
             );
 
           animation:
-            bites-loader-animation
-            1s infinite;
+            lettuce-animation
+            1.2s
+            ease-in-out
+            infinite;
         }
 
-        .bites-loader::after {
-          transform: scaleX(-1);
-        }
+        /* ====================================================
+           CHEESE
+           ==================================================== */
 
-        @keyframes bites-loader-animation {
-          0% {
-            background-position:
+        .loader-cheese {
+          width: 68px;
+          height: 7px;
+
+          background:
+            currentColor;
+
+          margin-top: 1px;
+
+          clip-path:
+            polygon(
               0 0,
-              10px 10px,
-              20px 20px;
-          }
+              100% 0,
+              88% 100%,
+              70% 40%,
+              50% 100%,
+              30% 40%,
+              12% 100%
+            );
+        }
 
-          33% {
-            background-position:
-              10px 10px;
-          }
+        /* ====================================================
+           PATTY
+           ==================================================== */
 
-          66% {
-            background-position:
-              0 20px,
-              10px 10px,
-              20px 0;
-          }
+        .loader-patty {
+          width: 72px;
+          height: 15px;
 
+          margin-top: -1px;
+
+          border-radius: 8px;
+
+          background:
+            currentColor;
+
+          animation:
+            patty-animation
+            1.2s
+            ease-in-out
+            infinite;
+        }
+
+        /* ====================================================
+           BOTTOM BUN
+           ==================================================== */
+
+        .loader-bun-bottom {
+          width: 70px;
+          height: 12px;
+
+          margin-top: 1px;
+
+          border-radius:
+            5px
+            5px
+            14px
+            14px;
+
+          background:
+            currentColor;
+        }
+
+        /* ====================================================
+           DOTS
+           ==================================================== */
+
+        .loader-dots {
+          display: flex;
+
+          align-items: center;
+
+          gap: 5px;
+
+          margin-top: 18px;
+        }
+
+        .loader-dots span {
+          width: 5px;
+          height: 5px;
+
+          border-radius: 50%;
+
+          background:
+            currentColor;
+
+          animation:
+            dot-animation
+            1s
+            ease-in-out
+            infinite;
+        }
+
+        .loader-dots span:nth-child(2) {
+          animation-delay:
+            0.15s;
+        }
+
+        .loader-dots span:nth-child(3) {
+          animation-delay:
+            0.3s;
+        }
+
+        /* ====================================================
+           ANIMATIONS
+           ==================================================== */
+
+        @keyframes burger-loader-bounce {
+          0%,
           100% {
-            background-position:
-              0 0,
-              10px 10px,
-              20px 20px;
+            transform:
+              translateY(0);
+          }
+
+          50% {
+            transform:
+              translateY(-5px);
           }
         }
 
-        /* =====================================================
-           CANVAS
+        @keyframes bun-top-animation {
+          0%,
+          100% {
+            transform:
+              scaleX(1);
+          }
 
-           Canvas fills the visual area.
-           The JavaScript performs object-cover cropping,
-           therefore the actual WebP frames are NEVER
-           stretched.
-        ===================================================== */
+          50% {
+            transform:
+              scaleX(0.96);
+          }
+        }
+
+        @keyframes lettuce-animation {
+          0%,
+          100% {
+            transform:
+              translateX(0);
+          }
+
+          50% {
+            transform:
+              translateX(2px);
+          }
+        }
+
+        @keyframes patty-animation {
+          0%,
+          100% {
+            transform:
+              scaleX(1);
+          }
+
+          50% {
+            transform:
+              scaleX(0.94);
+          }
+        }
+
+        @keyframes dot-animation {
+          0%,
+          100% {
+            opacity: 0.25;
+            transform:
+              translateY(0);
+          }
+
+          50% {
+            opacity: 1;
+            transform:
+              translateY(-3px);
+          }
+        }
+
+        /* ====================================================
+           CANVAS
+           ==================================================== */
 
         #hero-banner canvas {
           width: 100%;
           height: 100%;
+
           display: block;
         }
 
-        /* =====================================================
+        /* ====================================================
            MOBILE
-        ===================================================== */
+           ==================================================== */
 
         @media (max-width: 767px) {
-          .bites-loader {
-            width: 52px;
+          .bites-food-loader {
+            transform:
+              scale(0.9);
           }
         }
 
-        /* =====================================================
-           REDUCE MOTION
-
-           We still keep the frame system because it is the
-           core hero, but reduce UI transitions.
-        ===================================================== */
+        /* ====================================================
+           REDUCED MOTION
+           ==================================================== */
 
         @media (prefers-reduced-motion: reduce) {
           .bites-loader-screen {
             transition: none;
           }
 
-          .bites-loader::before,
-          .bites-loader::after {
-            animation-duration: 2s;
+          .bites-food-loader,
+          .loader-bun-top,
+          .loader-lettuce,
+          .loader-patty,
+          .loader-dots span {
+            animation-duration:
+              2s;
           }
         }
+
       `}</style>
     </>
   );
 };
 
-export { HeroBanner };
 export default HeroBanner;
