@@ -35,7 +35,7 @@ export const FeatureHighlight: React.FC = () => {
       {/* Mobile Background */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat md:hidden z-0"
-        style={{ backgroundImage: 'url("/image copy 11.png")' }}
+        style={{ backgroundImage: 'url("/image copy 31.png")' }}
       />
       {/* Desktop Background */}
       <div

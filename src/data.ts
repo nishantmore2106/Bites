@@ -1351,30 +1351,110 @@ export const MENU_ITEMS: MenuItem[] = [
 
 
 
-
 export const TESTIMONIALS: TestimonialItem[] = [
   {
     id: 1,
-    author: "Pratyush Panda",
-    reviewsCount: 0,
-    followersCount: 56,
-    rating: 4,
+    author: "Kashmira Sangani",
+    reviewsCount: 11,
+    followersCount: 0,
+    rating: 5,
     type: "DINING",
-    date: "Feb 02, 2020",
-    highlights: ["POSITIVE", "samosa", "veg cheese", "veg grilled"],
-    quote: "Veg cheese sandwich was good, veg grilled sandwich was okayish and samosa sandwich was great. All order came on time except samosa sandwich which took around 20 mins. Suggest this place as it has a proper sitting at the same rates"
+    date: "1 month ago",
+    highlights: ["POSITIVE"],
+    quote: "Best quality n quantity ..."
   },
+
   {
     id: 2,
-    author: "Kaushal Mehta",
-    reviewsCount: 0,
-    followersCount: 2428,
+    author: "Vinita Patel",
+    reviewsCount: 5,
+    followersCount: 0,
+    rating: 5,
+    type: "DINING",
+    date: "1 month ago",
+    highlights: ["POSITIVE", "margarita pizza"],
+    quote:
+      "Dining at Bombay sandwich was an absolute delight from start to finish! Every dish we tried was bursting with flavor and cooked to perfection. I especially recommend the margarita pizza it was a true standout. The service was warm, ..."
+  },
+
+  {
+    id: 3,
+    author: "VMM",
+    reviewsCount: 5,
+    followersCount: 0,
     rating: 4,
     type: "DINING",
-    date: "Oct 07, 2018",
-    quote: "Recently been to Vadodara and wanted to have some quick bites.. Thought to have some sandwiches and selected this outlet for same.. Bombay Sandwich Bites is in business since long and almost every local person would be advocate to same.. Talking about ambience, nothing extra ordinary as it is simple and sober shop serving to the city and service is also pretty decent..."
+    date: "3 months ago",
+    highlights: ["POSITIVE"],
+    quote: ""
+  },
+
+  {
+    id: 4,
+    author: "Jenil Kotiya",
+    reviewsCount: 2,
+    followersCount: 0,
+    rating: 5,
+    type: "DINING",
+    date: "3 months ago",
+    highlights: ["POSITIVE"],
+    quote: ""
+  },
+
+  {
+    id: 5,
+    author: "Reviewer name not visible",
+    reviewsCount: 0,
+    followersCount: 0,
+    rating: 5,
+    type: "DINING",
+    date: "3 months ago",
+    highlights: ["POSITIVE", "sandwiches", "vibe", "parking"],
+    quote:
+      "It is a good place to visit, you'll get good sandwiches and vibe is also good. Parking: There are too many but, this one has orange board and it is in basement ..."
+  },
+
+  {
+    id: 6,
+    author: "Jitu More",
+    reviewsCount: 4,
+    followersCount: 0,
+    rating: 5,
+    type: "DINING",
+    date: "4 months ago",
+    highlights: ["POSITIVE"],
+    quote: ""
+  },
+
+  {
+    id: 7,
+    author: "Pushpa Parmar",
+    reviewsCount: 1,
+    followersCount: 0,
+    rating: 5,
+    type: "DINING",
+    date: "4 months ago",
+    highlights: ["POSITIVE"],
+    quote: ""
+  },
+
+  {
+    id: 8,
+    author: "Akshay Ghela",
+    reviewsCount: 18,
+    followersCount: 0,
+    rating: 4,
+    type: "DINING",
+    date: "8 months ago",
+    highlights: ["POSITIVE"],
+    quote: ""
   }
 ];
+
+
+
+
+
 
 export const INGREDIENT_LAYERS: IngredientLayer[] = [
   {
