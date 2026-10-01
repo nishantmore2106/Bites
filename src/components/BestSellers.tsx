@@ -99,7 +99,7 @@ export const BestSellers: React.FC = () => {
       <div className="w-full flex flex-col lg:flex-row items-start lg:items-center justify-between mb-16 gap-10 relative z-10">
 
         <h2 className="font-display font-extrabold text-4xl md:text-5xl lg:text-6xl uppercase tracking-tight shrink-0">
-          SIGNATURE DISHES OF
+          SIGNATURE OF
           <br />
           BITES
           <img
