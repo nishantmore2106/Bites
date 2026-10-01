@@ -2079,5 +2079,3 @@ export const HeroBanner: React.FC = () => {
     </>
   );
 };
-
-export default HeroBanner;
