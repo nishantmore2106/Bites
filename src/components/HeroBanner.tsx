@@ -43,7 +43,7 @@ import React, { useEffect, useRef } from "react";
 */
 const SOURCE_FRAME_COUNT = 273;
 const FRAME_STEP_DESKTOP = 1;
-const FRAME_STEP_MOBILE = 2;
+const FRAME_STEP_MOBILE = 4;
 
 const FRAME_FOLDER = "/hero-webp";
 const FRAME_PREFIX = "ezgif-frame-";
@@ -99,13 +99,15 @@ const FETCH_HORIZON_CONSTRAINED = 45;
 | sized from a byte budget once the real frame size is known.
 */
 const DECODED_BUDGET_MB_DESKTOP = 400;
-const DECODED_BUDGET_MB_MOBILE = 150;
+const DECODED_BUDGET_MB_MOBILE = 50;
 
 /* Never go below this many decoded frames, whatever the budget says. */
-const MIN_DECODED_CAPACITY = 12;
+const MIN_DECODED_CAPACITY_DESKTOP = 12;
+const MIN_DECODED_CAPACITY_MOBILE = 4;
 
 /* Used only until the first frame has been decoded and measured. */
-const DEFAULT_CAPACITY_BEFORE_MEASURE = 16;
+const DEFAULT_CAPACITY_BEFORE_MEASURE_DESKTOP = 16;
+const DEFAULT_CAPACITY_BEFORE_MEASURE_MOBILE = 6;
 
 /* Share of the decoded window kept AHEAD of the target (travel direction). */
 const AHEAD_SHARE = 0.7;
@@ -162,6 +164,8 @@ interface FrameStoreOptions {
   prefetchAll: boolean;
   onBlob: (frame: number) => void;
   onDecoded: (frame: number) => void;
+  minCapacity: number;
+  defaultCapacity: number;
 }
 
 class FrameStore {
@@ -179,6 +183,7 @@ class FrameStore {
   private readonly fetchHorizon: number;
   private readonly onBlob: (frame: number) => void;
   private readonly onDecoded: (frame: number) => void;
+  private readonly minCapacity: number;
   private readonly canUseBitmap = typeof createImageBitmap === "function";
 
   /* Layer 1: compressed bytes (never evicted, ~100 KB each). */
@@ -217,7 +222,8 @@ class FrameStore {
       : FETCH_HORIZON_CONSTRAINED;
     this.onBlob = options.onBlob;
     this.onDecoded = options.onDecoded;
-    this.setCapacity(DEFAULT_CAPACITY_BEFORE_MEASURE);
+    this.minCapacity = options.minCapacity;
+    this.setCapacity(options.defaultCapacity);
   }
 
   /* ---------------------------- public API ---------------------------- */
@@ -337,7 +343,7 @@ class FrameStore {
   }
 
   private setCapacity(requested: number): void {
-    const floor = Math.min(MIN_DECODED_CAPACITY, this.frameCount);
+    const floor = Math.min(this.minCapacity, this.frameCount);
     this.capacity = Math.max(
       floor,
       Math.min(this.frameCount, Math.floor(requested)),
@@ -780,6 +786,8 @@ export const HeroBanner: React.FC = () => {
         : DECODE_CONCURRENCY_DESKTOP,
       budgetBytes: budgetMB * 1024 * 1024,
       prefetchAll: !constrainedNetwork,
+      minCapacity: isMobile ? MIN_DECODED_CAPACITY_MOBILE : MIN_DECODED_CAPACITY_DESKTOP,
+      defaultCapacity: isMobile ? DEFAULT_CAPACITY_BEFORE_MEASURE_MOBILE : DEFAULT_CAPACITY_BEFORE_MEASURE_DESKTOP,
       onBlob: () => {
         checkCritical();
       },
@@ -1218,15 +1226,6 @@ export const HeroBanner: React.FC = () => {
             ==================================================== */}
         <div className="fixed inset-0 z-0 overflow-hidden">
           <canvas ref={canvasRef} className="block h-full w-full" />
-          {/* Dark overlay */}
-          <div
-            className="
-              pointer-events-none
-              absolute
-              inset-0
-              bg-black/10
-            "
-          />
           {/* ==================================================
               CENTER TITLE
               ================================================== */}
