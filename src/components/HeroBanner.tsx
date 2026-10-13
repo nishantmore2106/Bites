@@ -699,6 +699,8 @@ export const HeroBanner: React.FC = () => {
     */
     let displayed = 0; /* frame currently on the canvas (0 = nothing yet) */
     let target = 0; /* frame the scroll position maps to */
+    let scrollTarget = 0;
+    let renderedFrame = 0;
     let dir: 1 | -1 = 1; /* direction of travel */
     let hasDrawn = false;
     let criticalStart = 0;
@@ -946,9 +948,31 @@ export const HeroBanner: React.FC = () => {
       /* 0 -> beginning, 1 -> end */
       const progress = Math.min(1, Math.max(0, -rect.top / scrollableDistance));
 
-      const nextTarget = Math.max(
+      scrollTarget = Math.max(
         1,
         Math.min(frameCount, Math.round(1 + progress * (frameCount - 1))),
+      );
+
+      if (renderedFrame === 0) {
+        renderedFrame = scrollTarget;
+      }
+
+      // Smooth frame coast: interpolate so frames smoothly glide a little further upon scroll release
+      const lerpFactor = isMobile ? 0.16 : 0.45;
+      const diff = scrollTarget - renderedFrame;
+
+      if (Math.abs(diff) < 0.05) {
+        renderedFrame = scrollTarget;
+      } else {
+        renderedFrame += diff * lerpFactor;
+        if (rafId === null) {
+          rafId = window.requestAnimationFrame(tick);
+        }
+      }
+
+      const nextTarget = Math.max(
+        1,
+        Math.min(frameCount, Math.round(renderedFrame)),
       );
 
       const moved = nextTarget !== target;

@@ -7,4 +7,4 @@ coverage/
 .env*
 !.env.example
 
-public/download.mp4
+public/*.mp4

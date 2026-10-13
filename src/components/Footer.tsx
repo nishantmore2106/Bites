@@ -41,7 +41,19 @@ export const Footer: React.FC = () => {
 
         <div className="w-full sm:w-1/2 flex items-center justify-center sm:justify-end gap-2">
           <span>Made by</span>
-          <img src="/Artboard 7 copy 3@2x.png" alt="Made by Logo" className="h-4 md:h-5 object-contain opacity-70 hover:opacity-100 transition-opacity" />
+          <a
+            href="https://www.instagram.com/entropy.gen"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center hover:opacity-100 transition-opacity"
+            title="Entropy (@entropy.gen)"
+          >
+            <img
+              src="/Artboard 7 copy 3@2x.png"
+              alt="Entropy (@entropy.gen)"
+              className="h-4 md:h-5 object-contain opacity-70 hover:opacity-100 transition-opacity"
+            />
+          </a>
         </div>
       </div>
     </footer>
